@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Constellate: a star chart of Microsoft 365</title>
+<meta name="description" content="Constellate is an interactive star chart of Microsoft 365 services, features, licensing and documentation.">
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,500;1,400;1,500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<link rel="stylesheet" href="assets/css/atlas.css">
+</head>
+<body>
+<div class="app" id="app">
+  <svg id="sky" role="group" aria-label="Map of Microsoft 365 services drawn as constellations"></svg>
+  <p class="sr-only" id="kbd-help">Use the arrow keys to move between this service's features. Press Enter to open one.</p>
+
+  <header class="top" id="top">
+    <div class="brand">
+      <h1>Constellate</h1>
+      <nav class="crumbs" id="crumbs" aria-label="Where you are"></nav>
+    </div>
+    <div class="tools">
+      <div class="search">
+        <input id="q" type="search" placeholder="Find a service or feature" aria-label="Find a service or feature" autocomplete="off"
+               role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="results">
+        <ul class="results" id="results" aria-label="Search results" hidden></ul>
+        <p class="sr-only" id="results-status" aria-live="polite"></p>
+      </div>
+      <label class="filter"><span>Plan</span>
+        <select id="plan" aria-label="Filter by plan">
+          <option value="all">Everything</option>
+          <!-- plans from data/services.js are inserted here -->
+          <option value="addon">Add-ons only</option>
+        </select>
+      </label>
+      <label class="filter" id="suite-filter" hidden><span>Add-ons</span>
+        <select id="suites" aria-label="Add-on suites">
+          <option value="">No suites</option>
+          <option value="defender">+ Defender Suite</option>
+          <option value="purview">+ Purview Suite</option>
+          <option value="defender+purview">+ Defender &amp; Purview Suites</option>
+        </select>
+      </label>
+    </div>
+  </header>
+
+  <aside class="panel" id="panel" aria-label="Details"></aside>
+
+  <p class="hint" id="hint">Select a constellation to zoom in. Drag, scroll or pinch to look around.</p>
+  <p class="foot">Licensing shown is indicative. Confirm against current Microsoft plans before quoting.</p>
+</div>
+
+<script src="data/services.js"></script>
+<script src="assets/js/atlas.js"></script>
+</body>
+</html>

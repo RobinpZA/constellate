@@ -1,0 +1,30 @@
+name: Data correction
+description: Report an out-of-date summary, licence tier or documentation link
+labels: [data]
+body:
+  - type: input
+    id: item
+    attributes:
+      label: Service or feature
+      placeholder: e.g. Conditional Access
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What needs fixing
+      options:
+        - Summary is wrong or out of date
+        - Licence tier or note is wrong
+        - Documentation link is broken or moved
+        - Missing feature
+        - Missing or wrong connection between features
+    validations:
+      required: true
+  - type: textarea
+    id: detail
+    attributes:
+      label: Details and source
+      description: What should it say, and where did you confirm it? A Microsoft Learn or licensing link is ideal.
+    validations:
+      required: true

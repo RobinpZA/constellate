@@ -1,0 +1,12 @@
+{
+  "name": "constellate",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Constellate: an interactive star chart of Microsoft 365 services, features, licensing and documentation.",
+  "type": "module",
+  "scripts": {
+    "validate": "node tools/validate-data.mjs",
+    "start": "npx --yes http-server . -p 8080 -c-1 -o"
+  },
+  "engines": { "node": ">=18" }
+}

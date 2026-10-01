@@ -1,0 +1,9 @@
+node_modules/
+_site/
+lychee/
+.DS_Store
+Thumbs.db
+*.log
+.vscode/*
+!.vscode/extensions.json
+.claude/settings.local.json
