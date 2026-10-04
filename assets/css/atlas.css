@@ -8,6 +8,7 @@
   --ease-out:cubic-bezier(.3,.7,.3,1);--dur-fast:.2s;--dur-base:.4s;--dur-slow:1s;
   --target:44px;
   box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+  padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px);
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --sky:#0C1526;--ink:#ECE6D5;--faint:#8593AD;--line:#2C3E5E;--panel:#101C33;--panel-line:#25395B;--control-line:#61749A;--hover:#1A2B4A;--bgstar:#C9D3E8;--halo:.22;
@@ -53,7 +54,7 @@ button{font:inherit;color:inherit}
 .cmp .relring{fill:none;stroke:var(--c);stroke-width:1.25;opacity:0}
 .cmp.rel .relring{opacity:.9}
 .cmp .lbl{font-size:var(--text-sm);fill:var(--ink);opacity:0;transition:opacity var(--dur-fast) var(--ease-out)}
-#sky.deep .cmp .lbl{opacity:.9}
+#sky.deep:not(.focused) .cmp:not(.lbl-off) .lbl,#sky.deep .is-focus .cmp:not(.lbl-off) .lbl{opacity:.9}
 .cmp:hover .lbl,.cmp:focus-visible .lbl,.cmp.sel .lbl,.cmp.rel .lbl{opacity:1}
 .cmp.sel .core{stroke:var(--ink);stroke-width:2}
 .cmp.sel .lbl{font-weight:600}
@@ -139,6 +140,8 @@ input:focus-visible,select:focus-visible,button:focus-visible,a:focus-visible{ou
 /* touch: 44px targets; small text buttons get an invisible hit area so layout doesn't shift */
 @media (pointer:coarse){
   .search input,.filter select,.btn{height:var(--target)}
+  /* 16px stops mobile browsers zooming the page when a field gets focus */
+  .search input,.filter select{font-size:16px}
   .results button,.list button{min-height:var(--target)}
   .close{width:var(--target);height:var(--target);top:8px;right:8px}
   .crumbs button,.kind button{position:relative}

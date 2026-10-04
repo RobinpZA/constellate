@@ -118,6 +118,27 @@ const zoom=d3.zoom().scaleExtent([.2,12]).on('zoom',e=>{
   if(e.sourceEvent) hideHint();
 });
 svg.call(zoom).on('dblclick.zoom',null);
+zoom.on('end',declutter);
+
+// Labels keep a fixed screen size, so on narrow screens they collide once zoomed in.
+// After each zoom, place labels greedily (selected, related, focused, then the rest)
+// and hide any that would overlap one already placed. Hover and tap still reveal them.
+function declutter(){
+  cn.classed('lbl-off',false);
+  if(!svgEl.classList.contains('deep')) return;
+  const box=el=>{const r=el.getBoundingClientRect(); return {l:r.left-3,t:r.top-1,r:r.right+3,b:r.bottom+1};};
+  const hits=(a,b)=>a.l<b.r&&b.l<a.r&&a.t<b.b&&b.t<a.b;
+  // Service names and the stars themselves are fixed obstacles.
+  const kept=[]; sn.each(function(){ kept.push(box(this.querySelector('.lbl')),box(this.querySelector('.ring'))); });
+  cn.each(function(){ kept.push(box(this.querySelector('.core'))); });
+  const rank=n=>n.classList.contains('sel')?0:n.classList.contains('rel')?1:n.closest('.is-focus')?2:3;
+  const nodes=cn.nodes().filter(n=>!n.classList.contains('muted')&&(!state.focus||rank(n)<3))
+    .map((n,i)=>({n,i,k:rank(n)})).sort((a,b)=>a.k-b.k||a.i-b.i);
+  for(const {n,k} of nodes){
+    const b=box(n.querySelector('.lbl'));
+    if(k>1&&kept.some(o=>hits(o,b))) n.classList.add('lbl-off'); else kept.push(b);
+  }
+}
 
 function viewportBox(ignorePanel){
   const r=svgEl.getBoundingClientRect(), tb=topEl.getBoundingClientRect(), mobile=r.width<=720;
@@ -163,7 +184,7 @@ function apply(){
   svgEl.classList.toggle('focused',!!state.focus);
   sg.classed('is-focus',d=>d.id===state.focus);
   cn.classed('sel',d=>d.id===state.sel);
-  drawThreads(); renderCrumbs();
+  drawThreads(); renderCrumbs(); declutter();
 }
 function drawThreads(){
   const n=state.sel&&N[state.sel];
@@ -195,6 +216,7 @@ function inPlan(c){
 }
 function applyLicence(){
   cn.classed('muted',d=>!inPlan(d));
+  declutter();
   panel.querySelectorAll('.list [data-go]').forEach(b=>{
     const h=!inPlan(N[b.dataset.go]);
     b.classList.toggle('is-muted',h);
