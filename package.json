@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "validate": "node tools/validate-data.mjs",
+    "test": "node --test \"tests/*.test.mjs\"",
     "start": "npx --yes http-server . -p 8080 -c-1 -o"
   },
   "engines": { "node": ">=18" }

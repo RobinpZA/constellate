@@ -1,9 +1,10 @@
 name: Validate data
 
 on:
-  push:
-    branches: [main]
   pull_request:
+
+permissions:
+  contents: read
 
 jobs:
   validate:
@@ -14,3 +15,4 @@ jobs:
         with:
           node-version: 24
       - run: npm run validate
+      - run: npm test

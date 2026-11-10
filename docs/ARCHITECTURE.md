@@ -2,7 +2,7 @@
 
 ## Overview
 
-Constellate is a static page. `index.html` loads D3 v7 from cdnjs, then `data/services.js` (which sets `window.ATLAS`) and `assets/js/atlas.js` (which renders it). Scripts load as classic scripts rather than ES modules, so the page works when opened from the file system as well as when hosted.
+Constellate is a static page. `index.html` loads D3 v7 from cdnjs, then `data/services.js` (which sets `window.ATLAS`), `assets/js/licence.js` (the licence rules, `ATLAS.inPlan`) and `assets/js/atlas.js` (which renders it). Scripts load as classic scripts rather than ES modules, so the page works when opened from the file system as well as when hosted.
 
 ```mermaid
 flowchart LR
@@ -27,7 +27,7 @@ The whole scene sits in one `<g>` transformed by `d3.zoom`. To stop stars and la
 
 ## State
 
-A single `state` object holds `focus` (service in view), `sel` (selected node), `plan` and `suites` (licence filter; see `inPlan()`). `selectNode(id)` is the one entry point for navigation from stars, search results, breadcrumbs and panel lists. `apply()` syncs CSS classes, threads and breadcrumbs from state.
+A single `state` object holds `focus` (service in view), `sel` (selected node), `plan` and `suites` (licence filter; see `ATLAS.inPlan()` in `assets/js/licence.js`, covered by `npm test`). `selectNode(id)` is the one entry point for navigation from stars, search results, breadcrumbs and panel lists. `apply()` syncs CSS classes, threads and breadcrumbs from state.
 
 ## Relationships
 

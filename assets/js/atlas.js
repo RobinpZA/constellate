@@ -200,20 +200,7 @@ function drawThreads(){
    .style('stroke',d=>`var(--${d.b.svc})`);
   cn.classed('rel',d=>!!(n&&n.type==='cmp'&&REL[n.id].has(d.id)));
 }
-// A plan covers its tier and below, plus its own `with` list, minus its `without` list.
-// Suites only count on plans that can take them. A plan's `suites` object lists extra
-// components each suite adds on that plan, such as Defender for Endpoint on F3.
-function inPlan(c){
-  if(state.plan==='all') return true;
-  if(state.plan==='addon') return c.lic==='addon';
-  const p=PLANS[state.plan];
-  if(p.without?.includes(c.id)) return false;
-  if(p.with?.includes(c.id)) return true;
-  if(typeof p.suites==='object' && state.suites.some(s=>p.suites[s]?.includes(c.id))) return true;
-  if(c.lic==='addon') return false;
-  if(LIC[c.lic].rank<=LIC[p.upTo].rank) return true;
-  return !!(p.suites && c.suite && state.suites.includes(c.suite));
-}
+const inPlan = c => window.ATLAS.inPlan(c, state.plan, state.suites);
 function applyLicence(){
   cn.classed('muted',d=>!inPlan(d));
   declutter();
