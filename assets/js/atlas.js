@@ -2,7 +2,7 @@
  * Constellate: rendering and interaction
  * Depends on: d3 v7 (global), data/services.js (window.ATLAS)
  */
-const { LIC, SUITES, PLANS, SERVICES, LINKS } = window.ATLAS;
+const { REVIEWED, LIC, SUITES, PLANS, SERVICES, LINKS } = window.ATLAS;
 
 /* ---------- build model ---------- */
 function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
@@ -319,6 +319,10 @@ document.addEventListener('keydown',e=>{
 
 /* ---------- hint, init, resize ---------- */
 function hideHint(){ hint.classList.add('gone'); }
+{
+  const el=document.getElementById('reviewed'), d=new Date(`${REVIEWED}T00:00:00Z`);
+  if(el&&!isNaN(d)) el.textContent=` Licensing reviewed ${d.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric',timeZone:'UTC'})}.`;
+}
 refreshOverviewK();
 renderCrumbs();
 fitTo(ALL_B,0);

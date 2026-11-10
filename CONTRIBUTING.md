@@ -12,7 +12,11 @@ Most contributions are content: correcting a summary, updating a licence tier, f
 
 ## Data schema
 
-`data/services.js` returns five things.
+`data/services.js` returns six things.
+
+### `REVIEWED`: licensing review date
+
+An ISO date string (`'YYYY-MM-DD'`) for when the licensing data was last checked against Microsoft's documentation. It is shown in the page footer. `npm run validate` errors if it is not a real date and warns when it is more than 100 days old, since a review is due each quarter.
 
 ### `LIC`: licence tiers
 
@@ -101,3 +105,4 @@ Pairs of service IDs, for example `['entra', 'intune']`.
 - [ ] `npm run validate` passes
 - [ ] Checked the change visually in light and dark themes
 - [ ] Licence changes include a source link in the PR description
+- [ ] Licensing changes update `REVIEWED` in `data/services.js`

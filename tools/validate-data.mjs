@@ -8,18 +8,29 @@ import vm from 'node:vm';
 const file = fileURLToPath(new URL('../data/services.js', import.meta.url));
 const sandbox = { window: {} };
 vm.runInNewContext(readFileSync(file, 'utf8'), sandbox, { filename: 'data/services.js' });
-const { LIC, SUITES, PLANS, SERVICES, LINKS } = sandbox.window.ATLAS ?? {};
+const { REVIEWED, LIC, SUITES, PLANS, SERVICES, LINKS } = sandbox.window.ATLAS ?? {};
 
 const errors = [], warnings = [];
 const err = m => errors.push(m), warn = m => warnings.push(m);
 
-if (!LIC || !SUITES || !PLANS || !SERVICES || !LINKS) { console.error('data/services.js must return { LIC, SUITES, PLANS, SERVICES, LINKS }'); process.exit(1); }
+if (!LIC || !SUITES || !PLANS || !SERVICES || !LINKS) { console.error('data/services.js must return { REVIEWED, LIC, SUITES, PLANS, SERVICES, LINKS }'); process.exit(1); }
 
 // --urls: print every docs URL, one per line, for the link checker (URLs are built from L + path, so they can't be scraped from source).
 if (process.argv.includes('--urls')) {
   const urls = new Set(SERVICES.flatMap(s => [s.docs, ...(s.components ?? []).map(c => c.docs)]).filter(Boolean));
   console.log([...urls].join('\n'));
   process.exit(0);
+}
+
+// Review date: must be a real ISO date; warn when a quarterly review is overdue.
+if (typeof REVIEWED !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(REVIEWED)) err('REVIEWED must be an ISO date string (YYYY-MM-DD)');
+else {
+  const reviewed = new Date(`${REVIEWED}T00:00:00Z`);
+  if (Number.isNaN(reviewed.getTime()) || reviewed.toISOString().slice(0, 10) !== REVIEWED) err(`REVIEWED "${REVIEWED}" is not a real date`);
+  else {
+    const days = Math.floor((Date.now() - reviewed.getTime()) / 86400000);
+    if (days > 100) warn(`licensing review is ${days} days old; a review is due each quarter`);
+  }
 }
 
 const ids = new Map();

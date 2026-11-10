@@ -5,10 +5,11 @@
  * Schema and writing guide: CONTRIBUTING.md
  * Validate after editing:   npm run validate
  *
- * Licensing last reviewed: 1 October 2026, against Microsoft Learn and
+ * Licensing review date: see REVIEWED below. Reviewed against Microsoft Learn and
  * Microsoft's product names and service plan identifiers CSV.
  */
 window.ATLAS = (() => {
+  const REVIEWED = '2026-10-01';
   const L = 'https://learn.microsoft.com/en-us/';
   const LIC = {
     core:{label:'Core Microsoft 365',short:'Core',rank:0},
@@ -435,5 +436,5 @@ window.ATLAS = (() => {
     ['copilot','collab'],['copilot','purview'],['copilot','exchange'],['copilot','defender'],
     ['apps365','entra'],['apps365','intune'],['power','entra'],['power','purview'],['viva','collab'],['admin','exchange'],['admin','defender']];
 
-  return { LIC, SUITES, PLANS, SERVICES, LINKS };
+  return { REVIEWED, LIC, SUITES, PLANS, SERVICES, LINKS };
 })();
