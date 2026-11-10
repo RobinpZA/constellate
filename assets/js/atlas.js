@@ -253,16 +253,16 @@ function showPanel(id){
   let h=`<button class="close" data-close aria-label="Close details">\u00d7</button>`;
   if(n.type==='svc'){
     h+=`<p class="kind">Service</p><h2>${esc(n.name)}</h2><p class="sum">${esc(n.summary)}</p>
-      <div class="actions"><a class="btn" href="${n.docs}" target="_blank" rel="noopener">Open documentation</a>
-      <a class="btn ghost" href="${n.portal}" target="_blank" rel="noopener">Open admin centre</a></div>
+      <div class="actions"><a class="btn" href="${esc(n.docs)}" target="_blank" rel="noopener">Open documentation</a>
+      <a class="btn ghost" href="${esc(n.portal)}" target="_blank" rel="noopener">Open admin centre</a></div>
       <h3>${n.components.length} components</h3><ul class="list">${n.components.map(c=>
-        `<li><button data-go="${c.id}"><span class="dot"></span><span>${esc(c.name)}${EX}</span><span class="lic" title="${esc(LIC[c.lic].label)}">${licShort(c)}</span></button></li>`).join('')}</ul>`;
+        `<li><button data-go="${c.id}"><span class="dot"></span><span>${esc(c.name)}${EX}</span><span class="lic" title="${esc(LIC[c.lic].label)}">${esc(licShort(c))}</span></button></li>`).join('')}</ul>`;
   } else {
     const rel=[...REL[n.id]].map(r=>N[r]);
     h+=`<p class="kind">Part of <button data-go="${s.id}">${esc(s.name)}</button></p><h2>${esc(n.name)}</h2>
       <p class="sum">${esc(n.summary)}</p>
-      <p class="licline"><span class="chip">${LIC[n.lic].label}</span>${extraPlans(n)}${n.suite?`<span class="chip" title="${esc(SUITES[n.suite].full)}">or ${esc(SUITES[n.suite].label)} on Business Premium / E3</span>`:''}${n.note?`<span>${esc(n.note)}</span>`:''}</p>
-      <div class="actions"><a class="btn" href="${n.docs}" target="_blank" rel="noopener">Open Microsoft Learn docs</a></div>
+      <p class="licline"><span class="chip">${esc(LIC[n.lic].label)}</span>${extraPlans(n)}${n.suite?`<span class="chip" title="${esc(SUITES[n.suite].full)}">or ${esc(SUITES[n.suite].label)} on Business Premium / E3</span>`:''}${n.note?`<span>${esc(n.note)}</span>`:''}</p>
+      <div class="actions"><a class="btn" href="${esc(n.docs)}" target="_blank" rel="noopener">Open Microsoft Learn docs</a></div>
       ${rel.length?`<h3>Works with</h3><ul class="list">${rel.map(r=>
         `<li><button data-go="${r.id}" style="--c:var(--${r.svc})"><span class="dot"></span><span>${esc(r.name)}${EX}</span><span class="lic">${esc(SVC[r.svc].short)}</span></button></li>`).join('')}</ul>`:''}`;
   }
@@ -308,8 +308,8 @@ q.addEventListener('input',()=>{
   resultsStatus.textContent = m.length ? `${m.length} ${m.length===1?'result':'results'}. Press the down arrow to choose.` : 'No matches.';
 });
 q.addEventListener('keydown',e=>{
-  if(e.key==='Enter'){ const b=results.querySelector('button'); if(b){ b.click(); q.value=''; q.blur(); } }
-  if(e.key==='ArrowDown'){ const b=results.querySelector('button'); if(b){ e.preventDefault(); b.focus(); } }
+  if(e.key==='Enter'){ if(results.hidden) return; const b=results.querySelector('button'); if(b){ b.click(); q.value=''; q.blur(); } }
+  if(e.key==='ArrowDown'){ if(results.hidden) return; const b=results.querySelector('button'); if(b){ e.preventDefault(); b.focus(); } }
 });
 results.addEventListener('keydown',e=>{
   const bs=[...results.querySelectorAll('button')], i=bs.indexOf(document.activeElement);

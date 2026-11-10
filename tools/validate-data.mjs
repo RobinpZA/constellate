@@ -30,6 +30,7 @@ for (const s of SERVICES) {
   for (const k of ['id', 'name', 'short', 'summary', 'docs', 'portal', 'x', 'y', 'angle', 'components'])
     if (s[k] === undefined) err(`service "${s.id ?? '?'}": missing "${k}"`);
   if (ids.has(s.id)) err(`duplicate id "${s.id}"`); ids.set(s.id, 'svc');
+  if (s.docs && !s.docs.startsWith('https://')) err(`service "${s.id}": docs must be an https URL`);
   if (s.docs && !s.docs.startsWith(DOC_PREFIX)) warn(`service "${s.id}": docs is not a Microsoft Learn URL`);
   if (!s.portal?.startsWith('https://')) err(`service "${s.id}": portal must be https`);
   if (!s.components?.length) err(`service "${s.id}": has no components`);
@@ -46,6 +47,7 @@ for (const s of SERVICES) {
       if (!SUITES?.[c.suite]) err(`${where}: unknown suite "${c.suite}" (use ${Object.keys(SUITES ?? {}).join(', ')})`);
       if (c.lic !== 'e5') err(`${where}: suite only applies to e5 components (this one is "${c.lic}")`);
     }
+    if (c.docs && !c.docs.startsWith('https://')) err(`${where}: docs must be an https URL`);
     if (c.docs && !c.docs.startsWith(DOC_PREFIX)) warn(`${where}: docs is not a Microsoft Learn URL`);
     if (c.docs?.includes('/en-us/') === false) warn(`${where}: docs URL has no /en-us/ locale`);
     if ((c.summary ?? '').length > MAX_SUMMARY) warn(`${where}: summary is ${c.summary.length} chars (aim for under ${MAX_SUMMARY})`);
