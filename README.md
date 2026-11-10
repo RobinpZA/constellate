@@ -39,7 +39,7 @@ cd constellate
 npm start          # serves on http://localhost:8080
 ```
 
-`npm start` uses `npx http-server`, so the only requirement is Node.js 18 or later. VS Code's Live Server extension works too.
+`npm start` uses `npx http-server`, so the only requirement is Node.js 26 or later. VS Code's Live Server extension works too.
 
 For first-time repo setup, GitHub Pages and branch protection, see [docs/GETTING-STARTED.md](docs/GETTING-STARTED.md).
 
@@ -79,7 +79,7 @@ Then run:
 npm run validate
 ```
 
-The validator checks for duplicate IDs, unknown licence tiers, broken `related` references, non-Learn doc URLs, overlong summaries and overlapping clusters. The full schema and writing guide are in [CONTRIBUTING.md](CONTRIBUTING.md).
+The validator checks for duplicate IDs, unknown licence tiers, broken `related` references, non-Learn doc URLs, overlong summaries and overlapping clusters. `npm test` runs the unit tests for the licence rules and deep links. The full schema and writing guide are in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Deployment
 

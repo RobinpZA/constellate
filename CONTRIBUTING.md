@@ -6,7 +6,7 @@ Most contributions are content: correcting a summary, updating a licence tier, f
 
 1. Create a branch: `git switch -c data/update-purview-labels`.
 2. Edit `data/services.js`.
-3. Run `npm run validate` and fix any errors. Review warnings.
+3. Run `npm run validate` and `npm test`. Fix any errors and review warnings.
 4. Open `index.html` and check the change on the map (zoom in, select the item, check the threads).
 5. Open a pull request. CI runs the validator again.
 
@@ -103,6 +103,7 @@ Pairs of service IDs, for example `['entra', 'intune']`.
 ## Pull request checklist
 
 - [ ] `npm run validate` passes
+- [ ] `npm test` passes
 - [ ] Checked the change visually in light and dark themes
 - [ ] Licence changes include a source link in the PR description
 - [ ] Licensing changes update `REVIEWED` in `data/services.js`

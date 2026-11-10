@@ -2,7 +2,7 @@
 
 ## Overview
 
-Constellate is a static page. `index.html` loads D3 v7 from cdnjs, then `data/services.js` (which sets `window.ATLAS`), `assets/js/licence.js` (the licence rules, `ATLAS.inPlan`) and `assets/js/atlas.js` (which renders it). Scripts load as classic scripts rather than ES modules, so the page works when opened from the file system as well as when hosted.
+Constellate is a static page. `index.html` loads D3 v7 from cdnjs, then `data/services.js` (which sets `window.ATLAS`), `assets/js/licence.js` (the licence rules, `ATLAS.inPlan`), `assets/js/route.js` (reads and writes the URL hash for deep links) and `assets/js/atlas.js` (which renders it). Scripts load as classic scripts rather than ES modules, so the page works when opened from the file system as well as when hosted.
 
 ```mermaid
 flowchart LR
