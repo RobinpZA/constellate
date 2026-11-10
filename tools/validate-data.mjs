@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Validates data/services.js: IDs, licence tiers, cross-links, doc URLs and summary length.
+// Validates data/services.js: IDs, licence tiers, cross-links, doc URLs and summary length, plus colour tokens in atlas.css.
 // Usage: node tools/validate-data.mjs   (or: npm run validate)
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -100,6 +100,17 @@ for (const [a, b] of LINKS) {
 for (let i = 0; i < SERVICES.length; i++) for (let j = i + 1; j < SERVICES.length; j++) {
   const a = SERVICES[i], b = SERVICES[j], d = Math.hypot(a.x - b.x, a.y - b.y);
   if (d < 330) warn(`services "${a.id}" and "${b.id}" are ${Math.round(d)} units apart; clusters may overlap (aim for 330+)`);
+}
+
+// Colour tokens: every service needs a --<id> token in all three theme blocks (light, dark media query, dark attribute).
+const css = readFileSync(fileURLToPath(new URL('../assets/css/atlas.css', import.meta.url)), 'utf8');
+const themeBlocks = [...css.matchAll(/\{([^{}]*--sky:[^{}]*)\}/g)].map(m => m[1]);
+if (themeBlocks.length !== 3) err(`atlas.css: expected 3 theme blocks, found ${themeBlocks.length}`);
+else {
+  themeBlocks.forEach((b, i) => {
+    for (const s of SERVICES) if (!new RegExp(`--${s.id}\s*:`).test(b)) err(`atlas.css: theme block ${i + 1} has no --${s.id} token`);
+  });
+  if (themeBlocks[1].replace(/\s+/g, '') !== themeBlocks[2].replace(/\s+/g, '')) err('atlas.css: the two dark theme blocks differ');
 }
 
 const count = SERVICES.reduce((n, s) => n + (s.components?.length ?? 0), 0);
