@@ -20,6 +20,7 @@ Microsoft 365 is hard to hold in your head. Customers hear "Entra", "Defender" a
 - **Feature detail.** Each feature has a short summary, a licence tier, licensing caveats, and a Microsoft Learn link. Services also link to their admin centre.
 - **Cross-service threads.** Selecting a feature draws lines to related features in other services, such as Conditional Access to Intune compliance and ID Protection.
 - **Licence filter.** Pick a plan (Business Basic, Standard or Premium, Office 365 E1 or E3, Microsoft 365 E3, E5 or E7, or frontline F1 or F3) and optionally add the Defender and Purview Suites. Everything outside it dims, to show what an upgrade would unlock.
+- **Deep links.** The URL follows the view, so a feature and plan can be shared, such as `https://robinpza.github.io/constellate/#ca?plan=e3`.
 - **Search.** Matches names, acronyms (MDE, DLP, PIM, SPF) and summaries.
 - **Light and dark themes.** Follows the system setting: a printed atlas in light mode, a night sky in dark mode.
 - **Responsive and accessible.** Works on mobile with a bottom-sheet panel, supports keyboard navigation (Tab, Enter, Esc) and respects reduced motion.

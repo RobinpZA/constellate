@@ -166,19 +166,41 @@ function fitTo(b,dur=850){
 function refreshOverviewK(){ overviewK=transformFor(ALL_B,true).k; }
 
 /* ---------- state ---------- */
-function selectNode(id){
+function selectNode(id,fromRoute,dur){
   const n=N[id]; if(!n) return;
   hideHint(); closeResults();
   state.focus = n.type==='svc' ? n.id : n.svc;
   state.sel = id;
   apply();
   showPanel(id);
-  requestAnimationFrame(()=>fitTo(clusterB(state.focus)));
+  requestAnimationFrame(()=>fitTo(clusterB(state.focus),dur));
+  if(!fromRoute) syncUrl(true);
 }
-function resetAll(){
+function resetAll(fromRoute,dur){
   const back=state.focus;
   state.focus=null; state.sel=null; apply(); hidePanel(back);
-  fitTo(ALL_B);
+  fitTo(ALL_B,dur);
+  if(!fromRoute) syncUrl(true);
+}
+/* ---------- deep links ---------- */
+function syncUrl(push){
+  const h=window.ATLAS.formatHash({id:state.sel,plan:state.plan,suites:state.suites});
+  const cur=location.hash==='#'?'':location.hash;
+  if(h===cur) return;
+  try{
+    history[push?'pushState':'replaceState'](null,'',location.pathname+location.search+h);
+  }catch(e){}
+}
+function restore(animate){
+  const r=window.ATLAS.parseHash(location.hash);
+  if(r.id===state.sel && r.plan===state.plan && r.suites.join('+')===state.suites.join('+')) return;
+  state.plan=r.plan; state.suites=r.suites;
+  planSel.value=r.plan; suitesSel.value=r.suites.join('+');
+  suiteFilter.hidden=!PLANS[state.plan]?.suites;
+  const dur=animate?undefined:0;
+  if(r.id) selectNode(r.id,true,dur);
+  else if(state.focus||state.sel) resetAll(true,dur);
+  applyLicence();
 }
 function apply(){
   svgEl.classList.toggle('focused',!!state.focus);
@@ -221,8 +243,9 @@ planSel.addEventListener('change',()=>{
   state.plan=planSel.value;
   suiteFilter.hidden=!PLANS[state.plan]?.suites;
   applyLicence();
+  syncUrl(false);
 });
-suitesSel.addEventListener('change',()=>{ state.suites=suitesSel.value?suitesSel.value.split('+'):[]; applyLicence(); });
+suitesSel.addEventListener('change',()=>{ state.suites=suitesSel.value?suitesSel.value.split('+'):[]; applyLicence(); syncUrl(false); });
 
 /* ---------- crumbs & panel ---------- */
 function renderCrumbs(){
@@ -274,6 +297,7 @@ function closePanel(){
   hidePanel(state.sel);
   if(state.sel && N[state.sel].type==='cmp'){ state.sel=state.focus; apply(); }
   requestAnimationFrame(()=>fitTo(state.focus?clusterB(state.focus):ALL_B));
+  syncUrl(true);
 }
 document.addEventListener('click',e=>{
   const go=e.target.closest('[data-go]');
@@ -326,5 +350,9 @@ function hideHint(){ hint.classList.add('gone'); }
 refreshOverviewK();
 renderCrumbs();
 fitTo(ALL_B,0);
+addEventListener('popstate',()=>restore(true));
+addEventListener('hashchange',()=>restore(true));
+if(location.hash) restore(false);
+syncUrl(false);
 let rt;
 addEventListener('resize',()=>{ clearTimeout(rt); rt=setTimeout(()=>{ refreshOverviewK(); fitTo(state.focus?clusterB(state.focus):ALL_B,0); },120); });

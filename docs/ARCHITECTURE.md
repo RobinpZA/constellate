@@ -29,6 +29,10 @@ The whole scene sits in one `<g>` transformed by `d3.zoom`. To stop stars and la
 
 A single `state` object holds `focus` (service in view), `sel` (selected node), `plan` and `suites` (licence filter; see `ATLAS.inPlan()` in `assets/js/licence.js`, covered by `npm test`). `selectNode(id)` is the one entry point for navigation from stars, search results, breadcrumbs and panel lists. `apply()` syncs CSS classes, threads and breadcrumbs from state.
 
+## Deep links
+
+The URL hash follows the view: `#<id>?plan=<key>&suites=<a+b>`, for example `#ca?plan=e3&suites=defender`. `ATLAS.parseHash` and `ATLAS.formatHash` (route.js) validate and build it. In atlas.js, `syncUrl(push)` writes it (push for selection changes, replace for plan and suite changes) and `restore(animate)` applies it on load, `popstate` and `hashchange`. The default state has no hash.
+
 ## Relationships
 
 `related` arrays are made bidirectional at load time into `REL` (a map of Sets), so data only needs one direction. Threads are quadratic curves from the selected feature to each related feature, coloured by the target's service.
