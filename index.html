@@ -5,11 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Constellate: a star chart of Microsoft 365</title>
 <meta name="description" content="Constellate is an interactive star chart of Microsoft 365 services, features, licensing and documentation.">
+  <link rel="canonical" href="https://robinpza.github.io/constellate/">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Constellate: a star chart of Microsoft 365">
+  <meta property="og:description" content="Constellate is an interactive star chart of Microsoft 365 services, features, licensing and documentation.">
+  <meta property="og:url" content="https://robinpza.github.io/constellate/">
+  <meta property="og:image" content="https://robinpza.github.io/constellate/assets/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,500;1,400;1,500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js" integrity="sha512-vc58qvvBdrDR4etbxMdlTt4GBQk1qjvyORR2nrsPsFPyrs+/u5c3+1Ct6upOgdZoIl7eq6k3a1UPDSNAQi/32A==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <link rel="stylesheet" href="assets/css/atlas.css">
 </head>
 <body>
@@ -39,9 +48,6 @@
       <label class="filter" id="suite-filter" hidden><span>Add-ons</span>
         <select id="suites" aria-label="Add-on suites">
           <option value="">No suites</option>
-          <option value="defender">+ Defender Suite</option>
-          <option value="purview">+ Purview Suite</option>
-          <option value="defender+purview">+ Defender &amp; Purview Suites</option>
         </select>
       </label>
     </div>
@@ -50,10 +56,12 @@
   <aside class="panel" id="panel" aria-label="Details"></aside>
 
   <p class="hint" id="hint">Select a constellation to zoom in. Drag, scroll or pinch to look around.</p>
-  <p class="foot">Licensing shown is indicative. Confirm against current Microsoft plans before quoting.</p>
+  <p class="foot">Licensing shown is indicative. Confirm against current Microsoft plans before quoting.<span id="reviewed"></span></p>
 </div>
 
 <script src="data/services.js"></script>
+<script src="assets/js/licence.js"></script>
+<script src="assets/js/route.js"></script>
 <script src="assets/js/atlas.js"></script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "56d7f4a28b3248878f8a55f214e6bc93"}'></script><!-- End Cloudflare Web Analytics -->
 </body>

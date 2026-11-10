@@ -2,7 +2,7 @@
  * Constellate: rendering and interaction
  * Depends on: d3 v7 (global), data/services.js (window.ATLAS)
  */
-const { LIC, SUITES, PLANS, SERVICES, LINKS } = window.ATLAS;
+const { REVIEWED, LIC, SUITES, PLANS, SERVICES, LINKS } = window.ATLAS;
 
 /* ---------- build model ---------- */
 function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
@@ -166,19 +166,41 @@ function fitTo(b,dur=850){
 function refreshOverviewK(){ overviewK=transformFor(ALL_B,true).k; }
 
 /* ---------- state ---------- */
-function selectNode(id){
+function selectNode(id,fromRoute,dur){
   const n=N[id]; if(!n) return;
   hideHint(); closeResults();
   state.focus = n.type==='svc' ? n.id : n.svc;
   state.sel = id;
   apply();
   showPanel(id);
-  requestAnimationFrame(()=>fitTo(clusterB(state.focus)));
+  requestAnimationFrame(()=>fitTo(clusterB(state.focus),dur));
+  if(!fromRoute) syncUrl(true);
 }
-function resetAll(){
+function resetAll(fromRoute,dur){
   const back=state.focus;
   state.focus=null; state.sel=null; apply(); hidePanel(back);
-  fitTo(ALL_B);
+  fitTo(ALL_B,dur);
+  if(!fromRoute) syncUrl(true);
+}
+/* ---------- deep links ---------- */
+function syncUrl(push){
+  const h=window.ATLAS.formatHash({id:state.sel,plan:state.plan,suites:state.suites});
+  const cur=location.hash==='#'?'':location.hash;
+  if(h===cur) return;
+  try{
+    history[push?'pushState':'replaceState'](null,'',location.pathname+location.search+h);
+  }catch(e){}
+}
+function restore(animate){
+  const r=window.ATLAS.parseHash(location.hash);
+  if(r.id===state.sel && r.plan===state.plan && r.suites.join('+')===state.suites.join('+')) return;
+  state.plan=r.plan; state.suites=r.suites;
+  planSel.value=r.plan; suitesSel.value=r.suites.join('+');
+  suiteFilter.hidden=!PLANS[state.plan]?.suites;
+  const dur=animate?undefined:0;
+  if(r.id) selectNode(r.id,true,dur);
+  else if(state.focus||state.sel) resetAll(true,dur);
+  applyLicence();
 }
 function apply(){
   svgEl.classList.toggle('focused',!!state.focus);
@@ -200,20 +222,7 @@ function drawThreads(){
    .style('stroke',d=>`var(--${d.b.svc})`);
   cn.classed('rel',d=>!!(n&&n.type==='cmp'&&REL[n.id].has(d.id)));
 }
-// A plan covers its tier and below, plus its own `with` list, minus its `without` list.
-// Suites only count on plans that can take them. A plan's `suites` object lists extra
-// components each suite adds on that plan, such as Defender for Endpoint on F3.
-function inPlan(c){
-  if(state.plan==='all') return true;
-  if(state.plan==='addon') return c.lic==='addon';
-  const p=PLANS[state.plan];
-  if(p.without?.includes(c.id)) return false;
-  if(p.with?.includes(c.id)) return true;
-  if(typeof p.suites==='object' && state.suites.some(s=>p.suites[s]?.includes(c.id))) return true;
-  if(c.lic==='addon') return false;
-  if(LIC[c.lic].rank<=LIC[p.upTo].rank) return true;
-  return !!(p.suites && c.suite && state.suites.includes(c.suite));
-}
+const inPlan = c => window.ATLAS.inPlan(c, state.plan, state.suites);
 function applyLicence(){
   cn.classed('muted',d=>!inPlan(d));
   declutter();
@@ -225,12 +234,18 @@ function applyLicence(){
 }
 const lastPlanOpt=planSel.querySelector('option[value="addon"]');
 Object.entries(PLANS).forEach(([k,p])=>lastPlanOpt.before(new Option(p.label,k)));
+{
+  const sk=Object.keys(SUITES);
+  sk.forEach(k=>suitesSel.add(new Option(`+ ${SUITES[k].label}`,k)));
+  if(sk.length>1) suitesSel.add(new Option('+ '+sk.map(k=>SUITES[k].label.replace(/ Suite$/,'')).join(' & ')+' Suites',sk.join('+')));
+}
 planSel.addEventListener('change',()=>{
   state.plan=planSel.value;
   suiteFilter.hidden=!PLANS[state.plan]?.suites;
   applyLicence();
+  syncUrl(false);
 });
-suitesSel.addEventListener('change',()=>{ state.suites=suitesSel.value?suitesSel.value.split('+'):[]; applyLicence(); });
+suitesSel.addEventListener('change',()=>{ state.suites=suitesSel.value?suitesSel.value.split('+'):[]; applyLicence(); syncUrl(false); });
 
 /* ---------- crumbs & panel ---------- */
 function renderCrumbs(){
@@ -246,6 +261,8 @@ const EX = `<span class="sr-only ex" hidden>, not in the selected licence</span>
 // Plans below the component's tier that include it anyway, e.g. desktop apps in Business Standard.
 const extraPlans = c => { const ps=Object.values(PLANS).filter(p=>p.with?.includes(c.id)).map(p=>p.label);
   return ps.length ? `<span class="chip">or ${esc(ps.join(', '))}</span>` : ''; };
+const addToPlans = c => Object.values(PLANS).filter(p=>p.suites && !p.without?.includes(c.id)).map(p=>p.label);
+const addTo = c => { const ps=addToPlans(c); return ps.length ? `<span>Add to: ${esc(ps.join(', '))}</span>` : ''; };
 const licShort = c =>LIC[c.lic].short + (c.suite ? ' / '+SUITES[c.suite].label.split(' ')[0] : '');
 function showPanel(id){
   const n=N[id], s=SVC[n.type==='svc'?n.id:n.svc];
@@ -253,16 +270,16 @@ function showPanel(id){
   let h=`<button class="close" data-close aria-label="Close details">\u00d7</button>`;
   if(n.type==='svc'){
     h+=`<p class="kind">Service</p><h2>${esc(n.name)}</h2><p class="sum">${esc(n.summary)}</p>
-      <div class="actions"><a class="btn" href="${n.docs}" target="_blank" rel="noopener">Open documentation</a>
-      <a class="btn ghost" href="${n.portal}" target="_blank" rel="noopener">Open admin centre</a></div>
+      <div class="actions"><a class="btn" href="${esc(n.docs)}" target="_blank" rel="noopener">Open documentation</a>
+      <a class="btn ghost" href="${esc(n.portal)}" target="_blank" rel="noopener">Open admin centre</a></div>
       <h3>${n.components.length} components</h3><ul class="list">${n.components.map(c=>
-        `<li><button data-go="${c.id}"><span class="dot"></span><span>${esc(c.name)}${EX}</span><span class="lic" title="${esc(LIC[c.lic].label)}">${licShort(c)}</span></button></li>`).join('')}</ul>`;
+        `<li><button data-go="${c.id}"><span class="dot"></span><span>${esc(c.name)}${EX}</span><span class="lic" title="${esc(LIC[c.lic].label)}">${esc(licShort(c))}</span></button></li>`).join('')}</ul>`;
   } else {
     const rel=[...REL[n.id]].map(r=>N[r]);
     h+=`<p class="kind">Part of <button data-go="${s.id}">${esc(s.name)}</button></p><h2>${esc(n.name)}</h2>
       <p class="sum">${esc(n.summary)}</p>
-      <p class="licline"><span class="chip">${LIC[n.lic].label}</span>${extraPlans(n)}${n.suite?`<span class="chip" title="${esc(SUITES[n.suite].full)}">or ${esc(SUITES[n.suite].label)} on Business Premium / E3</span>`:''}${n.note?`<span>${esc(n.note)}</span>`:''}</p>
-      <div class="actions"><a class="btn" href="${n.docs}" target="_blank" rel="noopener">Open Microsoft Learn docs</a></div>
+      <p class="licline"><span class="chip">${esc(LIC[n.lic].label)}</span>${extraPlans(n)}${n.suite?`<span class="chip" title="${esc(SUITES[n.suite].full)}">or ${esc(SUITES[n.suite].label)}</span>${addTo(n)}`:''}${n.note?`<span>${esc(n.note)}</span>`:''}</p>
+      <div class="actions"><a class="btn" href="${esc(n.docs)}" target="_blank" rel="noopener">Open Microsoft Learn docs</a></div>
       ${rel.length?`<h3>Works with</h3><ul class="list">${rel.map(r=>
         `<li><button data-go="${r.id}" style="--c:var(--${r.svc})"><span class="dot"></span><span>${esc(r.name)}${EX}</span><span class="lic">${esc(SVC[r.svc].short)}</span></button></li>`).join('')}</ul>`:''}`;
   }
@@ -282,6 +299,7 @@ function closePanel(){
   hidePanel(state.sel);
   if(state.sel && N[state.sel].type==='cmp'){ state.sel=state.focus; apply(); }
   requestAnimationFrame(()=>fitTo(state.focus?clusterB(state.focus):ALL_B));
+  syncUrl(true);
 }
 document.addEventListener('click',e=>{
   const go=e.target.closest('[data-go]');
@@ -308,8 +326,8 @@ q.addEventListener('input',()=>{
   resultsStatus.textContent = m.length ? `${m.length} ${m.length===1?'result':'results'}. Press the down arrow to choose.` : 'No matches.';
 });
 q.addEventListener('keydown',e=>{
-  if(e.key==='Enter'){ const b=results.querySelector('button'); if(b){ b.click(); q.value=''; q.blur(); } }
-  if(e.key==='ArrowDown'){ const b=results.querySelector('button'); if(b){ e.preventDefault(); b.focus(); } }
+  if(e.key==='Enter'){ if(results.hidden) return; const b=results.querySelector('button'); if(b){ b.click(); q.value=''; q.blur(); } }
+  if(e.key==='ArrowDown'){ if(results.hidden) return; const b=results.querySelector('button'); if(b){ e.preventDefault(); b.focus(); } }
 });
 results.addEventListener('keydown',e=>{
   const bs=[...results.querySelectorAll('button')], i=bs.indexOf(document.activeElement);
@@ -327,8 +345,16 @@ document.addEventListener('keydown',e=>{
 
 /* ---------- hint, init, resize ---------- */
 function hideHint(){ hint.classList.add('gone'); }
+{
+  const el=document.getElementById('reviewed'), d=new Date(`${REVIEWED}T00:00:00Z`);
+  if(el&&!isNaN(d)) el.textContent=` Licensing reviewed ${d.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric',timeZone:'UTC'})}.`;
+}
 refreshOverviewK();
 renderCrumbs();
 fitTo(ALL_B,0);
+addEventListener('popstate',()=>restore(true));
+addEventListener('hashchange',()=>restore(true));
+if(location.hash) restore(false);
+syncUrl(false);
 let rt;
 addEventListener('resize',()=>{ clearTimeout(rt); rt=setTimeout(()=>{ refreshOverviewK(); fitTo(state.focus?clusterB(state.focus):ALL_B,0); },120); });

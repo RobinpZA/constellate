@@ -6,13 +6,17 @@ Most contributions are content: correcting a summary, updating a licence tier, f
 
 1. Create a branch: `git switch -c data/update-purview-labels`.
 2. Edit `data/services.js`.
-3. Run `npm run validate` and fix any errors. Review warnings.
+3. Run `npm run validate` and `npm test`. Fix any errors and review warnings.
 4. Open `index.html` and check the change on the map (zoom in, select the item, check the threads).
 5. Open a pull request. CI runs the validator again.
 
 ## Data schema
 
-`data/services.js` returns five things.
+`data/services.js` returns six things.
+
+### `REVIEWED`: licensing review date
+
+An ISO date string (`'YYYY-MM-DD'`) for when the licensing data was last checked against Microsoft's documentation. It is shown in the page footer. `npm run validate` errors if it is not a real date and warns when it is more than 100 days old, since a review is due each quarter.
 
 ### `LIC`: licence tiers
 
@@ -30,8 +34,8 @@ Most contributions are content: correcting a summary, updating a licence tier, f
 
 | Key | Label | Meaning |
 | --- | --- | --- |
-| `defender` | Defender Suite | Formerly E5 Security. Entra ID P2 and the E5 Defender workloads, as an add-on to E3 or Business Premium. A frontline (FLW) version adds to F1 and F3 |
-| `purview` | Purview Suite | Formerly E5 Compliance. E5 Purview features, as an add-on to E3 or Business Premium. A frontline (FLW) version adds to F1 and F3 |
+| `defender` | Defender Suite | Formerly E5 Security. Entra ID P2 and the E5 Defender workloads, as an add-on to a plan that takes suites. A frontline (FLW) version adds to F1 and F3 |
+| `purview` | Purview Suite | Formerly E5 Compliance. E5 Purview features, as an add-on to a plan that takes suites. A frontline (FLW) version adds to F1 and F3 |
 
 Tag an `e5` component with `suite: 'defender'` or `suite: 'purview'` when that suite unlocks it without E5. The filter then lights it up when a plan with `suites: true` is chosen and that suite is added.
 
@@ -75,7 +79,7 @@ Example: Business Standard is `upTo:'core'` with the Microsoft 365 Apps features
 | `note` | no | Licensing caveat, under 160 characters |
 | `aka` | no | Space-separated search terms: acronyms, old names |
 | `related` | no | Component IDs this works with. One direction is enough; the app makes links two-way |
-| `suite` | no | `e5` components only: the `SUITES` key that unlocks it on E3 or Business Premium |
+| `suite` | no | `e5` components only: the `SUITES` key that unlocks it on a plan that takes suites |
 
 ### `LINKS`: dashed lines between services
 
@@ -99,5 +103,7 @@ Pairs of service IDs, for example `['entra', 'intune']`.
 ## Pull request checklist
 
 - [ ] `npm run validate` passes
+- [ ] `npm test` passes
 - [ ] Checked the change visually in light and dark themes
 - [ ] Licence changes include a source link in the PR description
+- [ ] Licensing changes update `REVIEWED` in `data/services.js`

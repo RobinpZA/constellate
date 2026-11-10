@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Validates data/services.js: IDs, licence tiers, cross-links, doc URLs and summary length.
+// Validates data/services.js: IDs, licence tiers, cross-links, doc URLs and summary length, plus colour tokens in atlas.css.
 // Usage: node tools/validate-data.mjs   (or: npm run validate)
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -8,18 +8,29 @@ import vm from 'node:vm';
 const file = fileURLToPath(new URL('../data/services.js', import.meta.url));
 const sandbox = { window: {} };
 vm.runInNewContext(readFileSync(file, 'utf8'), sandbox, { filename: 'data/services.js' });
-const { LIC, SUITES, PLANS, SERVICES, LINKS } = sandbox.window.ATLAS ?? {};
+const { REVIEWED, LIC, SUITES, PLANS, SERVICES, LINKS } = sandbox.window.ATLAS ?? {};
 
 const errors = [], warnings = [];
 const err = m => errors.push(m), warn = m => warnings.push(m);
 
-if (!LIC || !SUITES || !PLANS || !SERVICES || !LINKS) { console.error('data/services.js must return { LIC, SUITES, PLANS, SERVICES, LINKS }'); process.exit(1); }
+if (!LIC || !SUITES || !PLANS || !SERVICES || !LINKS) { console.error('data/services.js must return { REVIEWED, LIC, SUITES, PLANS, SERVICES, LINKS }'); process.exit(1); }
 
 // --urls: print every docs URL, one per line, for the link checker (URLs are built from L + path, so they can't be scraped from source).
 if (process.argv.includes('--urls')) {
   const urls = new Set(SERVICES.flatMap(s => [s.docs, ...(s.components ?? []).map(c => c.docs)]).filter(Boolean));
   console.log([...urls].join('\n'));
   process.exit(0);
+}
+
+// Review date: must be a real ISO date; warn when a quarterly review is overdue.
+if (typeof REVIEWED !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(REVIEWED)) err('REVIEWED must be an ISO date string (YYYY-MM-DD)');
+else {
+  const reviewed = new Date(`${REVIEWED}T00:00:00Z`);
+  if (Number.isNaN(reviewed.getTime()) || reviewed.toISOString().slice(0, 10) !== REVIEWED) err(`REVIEWED "${REVIEWED}" is not a real date`);
+  else {
+    const days = Math.floor((Date.now() - reviewed.getTime()) / 86400000);
+    if (days > 100) warn(`licensing review is ${days} days old; a review is due each quarter`);
+  }
 }
 
 const ids = new Map();
@@ -30,6 +41,7 @@ for (const s of SERVICES) {
   for (const k of ['id', 'name', 'short', 'summary', 'docs', 'portal', 'x', 'y', 'angle', 'components'])
     if (s[k] === undefined) err(`service "${s.id ?? '?'}": missing "${k}"`);
   if (ids.has(s.id)) err(`duplicate id "${s.id}"`); ids.set(s.id, 'svc');
+  if (s.docs && !s.docs.startsWith('https://')) err(`service "${s.id}": docs must be an https URL`);
   if (s.docs && !s.docs.startsWith(DOC_PREFIX)) warn(`service "${s.id}": docs is not a Microsoft Learn URL`);
   if (!s.portal?.startsWith('https://')) err(`service "${s.id}": portal must be https`);
   if (!s.components?.length) err(`service "${s.id}": has no components`);
@@ -46,6 +58,7 @@ for (const s of SERVICES) {
       if (!SUITES?.[c.suite]) err(`${where}: unknown suite "${c.suite}" (use ${Object.keys(SUITES ?? {}).join(', ')})`);
       if (c.lic !== 'e5') err(`${where}: suite only applies to e5 components (this one is "${c.lic}")`);
     }
+    if (c.docs && !c.docs.startsWith('https://')) err(`${where}: docs must be an https URL`);
     if (c.docs && !c.docs.startsWith(DOC_PREFIX)) warn(`${where}: docs is not a Microsoft Learn URL`);
     if (c.docs?.includes('/en-us/') === false) warn(`${where}: docs URL has no /en-us/ locale`);
     if ((c.summary ?? '').length > MAX_SUMMARY) warn(`${where}: summary is ${c.summary.length} chars (aim for under ${MAX_SUMMARY})`);
@@ -74,7 +87,7 @@ for (const [k, p] of Object.entries(PLANS)) {
   for (const id of p.without ?? []) {
     const c = cmpById.get(id);
     if (!c) err(`PLANS.${k}.without: "${id}" is not a component id`);
-    else if (c.lic === 'addon' || LIC[c.lic].rank > rank) warn(`PLANS.${k}.without: "${id}" isn't included by upTo "${p.upTo}" anyway`);
+    else if ((c.lic === 'addon' || LIC[c.lic].rank > rank) && !(p.suites && c.suite)) warn(`PLANS.${k}.without: "${id}" isn't included by upTo "${p.upTo}" anyway`);
   }
   if (p.suites !== undefined && p.suites !== true) {
     if (typeof p.suites !== 'object') err(`PLANS.${k}.suites: use true or { suiteKey: [component ids] }`);
@@ -98,6 +111,17 @@ for (const [a, b] of LINKS) {
 for (let i = 0; i < SERVICES.length; i++) for (let j = i + 1; j < SERVICES.length; j++) {
   const a = SERVICES[i], b = SERVICES[j], d = Math.hypot(a.x - b.x, a.y - b.y);
   if (d < 330) warn(`services "${a.id}" and "${b.id}" are ${Math.round(d)} units apart; clusters may overlap (aim for 330+)`);
+}
+
+// Colour tokens: every service needs a --<id> token in all three theme blocks (light, dark media query, dark attribute).
+const css = readFileSync(fileURLToPath(new URL('../assets/css/atlas.css', import.meta.url)), 'utf8');
+const themeBlocks = [...css.matchAll(/\{([^{}]*--sky:[^{}]*)\}/g)].map(m => m[1]);
+if (themeBlocks.length !== 3) err(`atlas.css: expected 3 theme blocks, found ${themeBlocks.length}`);
+else {
+  themeBlocks.forEach((b, i) => {
+    for (const s of SERVICES) if (!new RegExp(String.raw`--${s.id}\s*:`).test(b)) err(`atlas.css: theme block ${i + 1} has no --${s.id} token`);
+  });
+  if (themeBlocks[1].replace(/\s+/g, '') !== themeBlocks[2].replace(/\s+/g, '')) err('atlas.css: the two dark theme blocks differ');
 }
 
 const count = SERVICES.reduce((n, s) => n + (s.components?.length ?? 0), 0);

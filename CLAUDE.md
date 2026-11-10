@@ -10,3 +10,4 @@ Context for Claude Code or similar tools working in Constellate, an interactive 
 - Stars and labels are counter-scaled with `--inv`; new SVG elements inside nodes should go in the `.inner` group, and new lines need `vector-effect: non-scaling-stroke`.
 - UI copy uses sentence case and British/South African spelling (licence, centre, enrolment).
 - Respect `prefers-reduced-motion` (`RM` in atlas.js) for any new animation.
+- Licence rules live in `assets/js/licence.js`; run `npm test` after changing them or the plan data.
