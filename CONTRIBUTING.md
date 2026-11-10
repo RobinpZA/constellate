@@ -30,8 +30,8 @@ Most contributions are content: correcting a summary, updating a licence tier, f
 
 | Key | Label | Meaning |
 | --- | --- | --- |
-| `defender` | Defender Suite | Formerly E5 Security. Entra ID P2 and the E5 Defender workloads, as an add-on to E3 or Business Premium. A frontline (FLW) version adds to F1 and F3 |
-| `purview` | Purview Suite | Formerly E5 Compliance. E5 Purview features, as an add-on to E3 or Business Premium. A frontline (FLW) version adds to F1 and F3 |
+| `defender` | Defender Suite | Formerly E5 Security. Entra ID P2 and the E5 Defender workloads, as an add-on to a plan that takes suites. A frontline (FLW) version adds to F1 and F3 |
+| `purview` | Purview Suite | Formerly E5 Compliance. E5 Purview features, as an add-on to a plan that takes suites. A frontline (FLW) version adds to F1 and F3 |
 
 Tag an `e5` component with `suite: 'defender'` or `suite: 'purview'` when that suite unlocks it without E5. The filter then lights it up when a plan with `suites: true` is chosen and that suite is added.
 
@@ -75,7 +75,7 @@ Example: Business Standard is `upTo:'core'` with the Microsoft 365 Apps features
 | `note` | no | Licensing caveat, under 160 characters |
 | `aka` | no | Space-separated search terms: acronyms, old names |
 | `related` | no | Component IDs this works with. One direction is enough; the app makes links two-way |
-| `suite` | no | `e5` components only: the `SUITES` key that unlocks it on E3 or Business Premium |
+| `suite` | no | `e5` components only: the `SUITES` key that unlocks it on a plan that takes suites |
 
 ### `LINKS`: dashed lines between services
 

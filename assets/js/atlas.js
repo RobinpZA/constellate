@@ -225,6 +225,11 @@ function applyLicence(){
 }
 const lastPlanOpt=planSel.querySelector('option[value="addon"]');
 Object.entries(PLANS).forEach(([k,p])=>lastPlanOpt.before(new Option(p.label,k)));
+{
+  const sk=Object.keys(SUITES);
+  sk.forEach(k=>suitesSel.add(new Option(`+ ${SUITES[k].label}`,k)));
+  if(sk.length>1) suitesSel.add(new Option('+ '+sk.map(k=>SUITES[k].label.replace(/ Suite$/,'')).join(' & ')+' Suites',sk.join('+')));
+}
 planSel.addEventListener('change',()=>{
   state.plan=planSel.value;
   suiteFilter.hidden=!PLANS[state.plan]?.suites;
@@ -261,7 +266,7 @@ function showPanel(id){
     const rel=[...REL[n.id]].map(r=>N[r]);
     h+=`<p class="kind">Part of <button data-go="${s.id}">${esc(s.name)}</button></p><h2>${esc(n.name)}</h2>
       <p class="sum">${esc(n.summary)}</p>
-      <p class="licline"><span class="chip">${esc(LIC[n.lic].label)}</span>${extraPlans(n)}${n.suite?`<span class="chip" title="${esc(SUITES[n.suite].full)}">or ${esc(SUITES[n.suite].label)} on Business Premium / E3</span>`:''}${n.note?`<span>${esc(n.note)}</span>`:''}</p>
+      <p class="licline"><span class="chip">${esc(LIC[n.lic].label)}</span>${extraPlans(n)}${n.suite?`<span class="chip" title="${esc(SUITES[n.suite].full)}">or ${esc(SUITES[n.suite].label)}</span><span>Add to: ${esc(Object.values(PLANS).filter(p=>p.suites).map(p=>p.label).join(', '))}</span>`:''}${n.note?`<span>${esc(n.note)}</span>`:''}</p>
       <div class="actions"><a class="btn" href="${esc(n.docs)}" target="_blank" rel="noopener">Open Microsoft Learn docs</a></div>
       ${rel.length?`<h3>Works with</h3><ul class="list">${rel.map(r=>
         `<li><button data-go="${r.id}" style="--c:var(--${r.svc})"><span class="dot"></span><span>${esc(r.name)}${EX}</span><span class="lic">${esc(SVC[r.svc].short)}</span></button></li>`).join('')}</ul>`:''}`;
