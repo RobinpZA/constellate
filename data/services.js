@@ -48,16 +48,16 @@ window.ATLAS = (() => {
     // The kiosk mailbox is for the Teams calendar only, with no mail rights. No Office for the web,
     // Power Apps or Power Automate. Cloud App Discovery gives access to the Defender portal.
     // The frontline (FLW) suites unlock their usual E5 features plus the listed extras;
-    // both FLW suites include Entra ID P2.
+    // only the Defender Suite FLW includes Entra ID P2. DSPM for AI is excluded because no source lists it for the FLW suites.
     f1:{label:'Microsoft 365 F1',upTo:'core',
         with:[...IDENTITY_DEVICE,'xdr','labels'],
-        without:['mailboxes','powerapps','cloud-flows','insights','learning'],
-        suites:{defender:['mde','mdo'],purview:['pim','idp','dlp','retention','ediscovery']}},
+        without:['mailboxes','powerapps','cloud-flows','insights','learning','dspmai'],
+        suites:{defender:['mde','mdo'],purview:['dlp','retention','ediscovery']}},
     // Web and mobile apps only. Kiosk mailbox with no archive unless the Purview Suite adds one.
     f3:{label:'Microsoft 365 F3',upTo:'core',
         with:[...IDENTITY_DEVICE,'xdr','labels','ome','ediscovery'],
-        without:['insights'],
-        suites:{defender:['mde','mdo'],purview:['pim','idp','dlp','retention','archiving']}}
+        without:['insights','dspmai'],
+        suites:{defender:['mde','mdo'],purview:['dlp','retention','archiving']}}
   };
 
   const SERVICES = [

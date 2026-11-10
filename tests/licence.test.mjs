@@ -40,7 +40,18 @@ test('F1 exclusions and extras', () => {
   assert.equal(t('ca', 'f1', []), true);
   assert.equal(t('mde', 'f1', []), false);
   assert.equal(t('mde', 'f1', ['defender']), true);
-  assert.equal(t('pim', 'f1', ['purview']), true);
+  assert.equal(t('pim', 'f1', ['purview']), false);
+});
+test('Entra ID P2 on frontline comes only with the Defender suite', () => {
+  assert.equal(t('pim', 'f1', ['purview']), false);
+  assert.equal(t('pim', 'f1', ['defender']), true);
+  assert.equal(t('idp', 'f3', ['purview']), false);
+  assert.equal(t('idp', 'f3', ['defender']), true);
+});
+test('DSPM for AI is not in the frontline suites', () => {
+  assert.equal(t('dspmai', 'f1', ['purview']), false);
+  assert.equal(t('dspmai', 'f3', ['defender', 'purview']), false);
+  assert.equal(t('dspmai', 'e3', ['purview']), true);
 });
 test('F3 archive needs the Purview Suite', () => {
   assert.equal(t('archiving', 'f3', []), false);

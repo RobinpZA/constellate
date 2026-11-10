@@ -87,7 +87,7 @@ for (const [k, p] of Object.entries(PLANS)) {
   for (const id of p.without ?? []) {
     const c = cmpById.get(id);
     if (!c) err(`PLANS.${k}.without: "${id}" is not a component id`);
-    else if (c.lic === 'addon' || LIC[c.lic].rank > rank) warn(`PLANS.${k}.without: "${id}" isn't included by upTo "${p.upTo}" anyway`);
+    else if ((c.lic === 'addon' || LIC[c.lic].rank > rank) && !(p.suites && c.suite)) warn(`PLANS.${k}.without: "${id}" isn't included by upTo "${p.upTo}" anyway`);
   }
   if (p.suites !== undefined && p.suites !== true) {
     if (typeof p.suites !== 'object') err(`PLANS.${k}.suites: use true or { suiteKey: [component ids] }`);

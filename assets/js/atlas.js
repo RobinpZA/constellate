@@ -261,6 +261,8 @@ const EX = `<span class="sr-only ex" hidden>, not in the selected licence</span>
 // Plans below the component's tier that include it anyway, e.g. desktop apps in Business Standard.
 const extraPlans = c => { const ps=Object.values(PLANS).filter(p=>p.with?.includes(c.id)).map(p=>p.label);
   return ps.length ? `<span class="chip">or ${esc(ps.join(', '))}</span>` : ''; };
+const addToPlans = c => Object.values(PLANS).filter(p=>p.suites && !p.without?.includes(c.id)).map(p=>p.label);
+const addTo = c => { const ps=addToPlans(c); return ps.length ? `<span>Add to: ${esc(ps.join(', '))}</span>` : ''; };
 const licShort = c =>LIC[c.lic].short + (c.suite ? ' / '+SUITES[c.suite].label.split(' ')[0] : '');
 function showPanel(id){
   const n=N[id], s=SVC[n.type==='svc'?n.id:n.svc];
@@ -276,7 +278,7 @@ function showPanel(id){
     const rel=[...REL[n.id]].map(r=>N[r]);
     h+=`<p class="kind">Part of <button data-go="${s.id}">${esc(s.name)}</button></p><h2>${esc(n.name)}</h2>
       <p class="sum">${esc(n.summary)}</p>
-      <p class="licline"><span class="chip">${esc(LIC[n.lic].label)}</span>${extraPlans(n)}${n.suite?`<span class="chip" title="${esc(SUITES[n.suite].full)}">or ${esc(SUITES[n.suite].label)}</span><span>Add to: ${esc(Object.values(PLANS).filter(p=>p.suites).map(p=>p.label).join(', '))}</span>`:''}${n.note?`<span>${esc(n.note)}</span>`:''}</p>
+      <p class="licline"><span class="chip">${esc(LIC[n.lic].label)}</span>${extraPlans(n)}${n.suite?`<span class="chip" title="${esc(SUITES[n.suite].full)}">or ${esc(SUITES[n.suite].label)}</span>${addTo(n)}`:''}${n.note?`<span>${esc(n.note)}</span>`:''}</p>
       <div class="actions"><a class="btn" href="${esc(n.docs)}" target="_blank" rel="noopener">Open Microsoft Learn docs</a></div>
       ${rel.length?`<h3>Works with</h3><ul class="list">${rel.map(r=>
         `<li><button data-go="${r.id}" style="--c:var(--${r.svc})"><span class="dot"></span><span>${esc(r.name)}${EX}</span><span class="lic">${esc(SVC[r.svc].short)}</span></button></li>`).join('')}</ul>`:''}`;

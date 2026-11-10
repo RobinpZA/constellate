@@ -12,7 +12,7 @@ Ideas in rough priority order. Move items into GitHub issues as work starts.
 - [x] **Licensing review.** All 121 components checked against Microsoft Learn and the service plan CSV on 1 October 2026; date recorded in the data file.
 - [x] **Plan-based filter.** Business Basic, Standard and Premium, Office 365 E1, and Microsoft 365 E3, E5 and E7, with add-on suites as a separate control.
 - [x] **Frontline and Office 365 E3 plans.** F1, F3 and Office 365 E3 added on 1 October 2026, checked against the service plan CSV and Microsoft Learn.
-- [ ] **Plan follow-ups.** Confirm Microsoft 365 F3 gets eDiscovery (Standard): Learn names Office 365 F3 only. Confirm the Purview Suite FLW covers Information Barriers and DSPM for AI (Learn publishes no plan list for either). Check whether the suites can be added to Office 365 E3.
+- [ ] **Plan follow-ups.** Confirm Microsoft 365 F3 gets eDiscovery (Standard): Learn names Office 365 F3 only. Information Barriers is confirmed for the Purview Suite FLW (service plan CSV, 10 November 2026). DSPM for AI is still unconfirmed for the FLW suites, so it is shown as not included on F1/F3. Check whether the suites can be added to Office 365 E3.
 - [ ] **Licensing follow-ups.** Recheck Copilot Pages & Notebooks (whether Copilot Chat users get them without a licence) and Copilot Tuning (no published licensing yet). Repeat the full review each quarter.
 
 ## Medium term
