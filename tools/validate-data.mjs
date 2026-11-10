@@ -119,7 +119,7 @@ const themeBlocks = [...css.matchAll(/\{([^{}]*--sky:[^{}]*)\}/g)].map(m => m[1]
 if (themeBlocks.length !== 3) err(`atlas.css: expected 3 theme blocks, found ${themeBlocks.length}`);
 else {
   themeBlocks.forEach((b, i) => {
-    for (const s of SERVICES) if (!new RegExp(`--${s.id}\s*:`).test(b)) err(`atlas.css: theme block ${i + 1} has no --${s.id} token`);
+    for (const s of SERVICES) if (!new RegExp(String.raw`--${s.id}\s*:`).test(b)) err(`atlas.css: theme block ${i + 1} has no --${s.id} token`);
   });
   if (themeBlocks[1].replace(/\s+/g, '') !== themeBlocks[2].replace(/\s+/g, '')) err('atlas.css: the two dark theme blocks differ');
 }
