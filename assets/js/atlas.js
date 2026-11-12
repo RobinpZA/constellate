@@ -273,6 +273,21 @@ planSel.addEventListener('change',()=>{
 });
 suitesSel.addEventListener('change',()=>{ state.suites=suitesSel.value?suitesSel.value.split('+'):[]; applyLicence(); syncUrl(false); });
 
+/* ---------- theme ---------- */
+// index.html applies a stored choice before first paint; with none stored the OS setting decides.
+const themeBtn=document.getElementById('theme'), darkQuery=matchMedia('(prefers-color-scheme: dark)');
+const currentTheme = () => document.documentElement.dataset.theme || (darkQuery.matches?'dark':'light');
+const otherTheme = () => currentTheme()==='dark' ? 'light' : 'dark';
+function labelTheme(){ const t=`Switch to ${otherTheme()} theme`; themeBtn.setAttribute('aria-label',t); themeBtn.title=t; }
+themeBtn.addEventListener('click',()=>{
+  const to=otherTheme();
+  document.documentElement.dataset.theme=to;
+  try{ localStorage.setItem('constellate-theme',to); }catch(e){}
+  labelTheme();
+});
+darkQuery.addEventListener('change',labelTheme);
+labelTheme();
+
 /* ---------- crumbs & panel ---------- */
 function renderCrumbs(){
   if(!state.focus){ crumbEl.innerHTML=`<span>Microsoft 365 as a star chart: ${SERVICES.length} constellations, ${CMP_COUNT} features</span>`; return; }
@@ -286,7 +301,8 @@ function renderCrumbs(){
 const EX = `<span class="sr-only ex" hidden>, not in the selected licence</span>`;
 // Plans below the component's tier that include it anyway, e.g. desktop apps in Business Standard.
 const extraPlans = c => { const ps=Object.values(PLANS).filter(p=>p.with?.includes(c.id)).map(p=>p.label);
-  return ps.length ? `<span class="chip">or ${esc(ps.join(', '))}</span>` : ''; };
+  return ps.length ? `<span>or ${esc(ps.join(', '))}</span>` : ''; };
+const SVC_ORDER = Object.fromEntries(SERVICES.map((s,i)=>[s.id,i]));
 const addToPlans = c => Object.values(PLANS).filter(p=>p.suites && !p.without?.includes(c.id)).map(p=>p.label);
 const addTo = c => { const ps=addToPlans(c); return ps.length ? `<span>Add to: ${esc(ps.join(', '))}</span>` : ''; };
 const licShort = c =>LIC[c.lic].short + (c.suite ? ' / '+SUITES[c.suite].label.split(' ')[0] : '');
@@ -301,10 +317,12 @@ function showPanel(id){
       <h3>${n.components.length} components</h3><ul class="list">${n.components.map(c=>
         `<li><button data-go="${c.id}"><span class="dot"></span><span>${esc(c.name)}${EX}</span><span class="lic" title="${esc(LIC[c.lic].label)}">${esc(licShort(c))}</span></button></li>`).join('')}</ul>`;
   } else {
-    const rel=[...REL[n.id]].map(r=>N[r]);
+    // Same-service features first, then the rest grouped by service in chart order.
+    const at=r=>r.svc===n.svc?-1:SVC_ORDER[r.svc];
+    const rel=[...REL[n.id]].map(r=>N[r]).sort((a,b)=>at(a)-at(b));
     h+=`<p class="kind">Part of <button data-go="${s.id}">${esc(s.name)}</button></p><h2>${esc(n.name)}</h2>
       <p class="sum">${esc(n.summary)}</p>
-      <p class="licline"><span class="chip">${esc(LIC[n.lic].label)}</span>${extraPlans(n)}${n.suite?`<span class="chip" title="${esc(SUITES[n.suite].full)}">or ${esc(SUITES[n.suite].label)}</span>${addTo(n)}`:''}${n.note?`<span>${esc(n.note)}</span>`:''}</p>
+      <p class="licline"><span class="chip">${esc(LIC[n.lic].label)}</span>${extraPlans(n)}${n.suite?`<span title="${esc(SUITES[n.suite].full)}">or ${esc(SUITES[n.suite].label)}</span>${addTo(n)}`:''}${n.note?`<span>${esc(n.note)}</span>`:''}</p>
       <div class="actions"><a class="btn" href="${esc(n.docs)}" target="_blank" rel="noopener">Open Microsoft Learn docs</a></div>
       ${rel.length?`<h3>Works with</h3><ul class="list">${rel.map(r=>
         `<li><button data-go="${r.id}" style="--c:var(--${r.svc})"><span class="dot"></span><span>${esc(r.name)}${EX}</span><span class="lic">${esc(SVC[r.svc].short)}</span></button></li>`).join('')}</ul>`:''}`;

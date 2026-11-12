@@ -1,6 +1,6 @@
 {
   "name": "constellate",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "description": "Constellate: an interactive star chart of Microsoft 365 services, features, licensing and documentation.",
   "type": "module",
