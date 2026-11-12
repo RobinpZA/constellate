@@ -7,7 +7,7 @@ Ideas in rough priority order. Move items into GitHub issues as work starts.
 - [x] **Deep links.** Put the selected node in the URL hash (`#ca`) so a specific feature can be shared or linked from a proposal.
 - [ ] **More constellations.** Decide whether Windows 365 joins Intune or gets its own. Consider Azure as a separate atlas.
 - [ ] **Entra Verified ID.** Left out of the October 2026 gap fill because Entra is at the 12-component limit. Needs a swap or a split.
-- [ ] **Theme toggle.** A button that sets `data-theme` on `<html>`, remembered in `localStorage`.
+- [x] **Theme toggle.** A button that sets `data-theme` on `<html>`, remembered in `localStorage`.
 - [ ] **Export view.** Download the current view as PNG or SVG for decks and proposals.
 - [x] **Licensing review.** All 121 components checked against Microsoft Learn and the service plan CSV on 1 October 2026; date recorded in the data file.
 - [x] **Plan-based filter.** Business Basic, Standard and Premium, Office 365 E1, and Microsoft 365 E3, E5 and E7, with add-on suites as a separate control.

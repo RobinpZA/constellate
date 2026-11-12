@@ -70,6 +70,7 @@ const cn=rv.selectAll('g.cmp').data(d=>d.components).join('g').attr('class','nod
   .attr('transform',d=>`translate(${d.x},${d.y})`).attr('tabindex',-1).attr('role','button')
   .attr('aria-label',d=>`${d.name}, part of ${SVC[d.svc].short}`);
 const ci=cn.append('g').attr('class','inner');
+ci.append('circle').attr('class','selhalo').attr('r',17);
 ci.append('circle').attr('class','hit').attr('r',COARSE?22:15);
 ci.append('circle').attr('class','focusring').attr('r',11);
 ci.append('circle').attr('class','relring').attr('r',9.5);
@@ -95,6 +96,9 @@ d3.selectAll('.node')
     const step={ArrowRight:1,ArrowDown:1,ArrowLeft:-1,ArrowUp:-1}[e.key];
     if(step){e.preventDefault(); stepFocus(d,step);}
   });
+// Threads are drawn faint; the one leading to a hovered or focused feature brightens.
+function heat(id,on){ gThreads.selectAll('path').classed('hot',d=>on&&d.b.id===id); }
+cn.on('mouseenter focus',(e,d)=>heat(d.id,true)).on('mouseleave blur',()=>heat(null,false));
 
 // Roving focus: only service stars are tab stops. Arrows walk a service's features,
 // skipping ones the licence filter has muted.
@@ -114,7 +118,8 @@ const zoom=d3.zoom().scaleExtent([.2,12]).on('zoom',e=>{
   world.attr('transform',t);
   bg.attr('transform',`translate(${t.x*.18},${t.y*.18}) scale(${.6+.4*Math.pow(t.k,.25)})`);
   svgEl.style.setProperty('--inv',1/t.k);
-  svgEl.classList.toggle('deep',t.k>overviewK*1.6);
+  // A focused constellation may be fitted at a lower zoom to leave room for its labels.
+  svgEl.classList.toggle('deep',t.k>overviewK*(state.focus?1.15:1.6));
   if(e.sourceEvent) hideHint();
 });
 svg.call(zoom).on('dblclick.zoom',null);
@@ -122,21 +127,24 @@ zoom.on('end',declutter);
 
 // Labels keep a fixed screen size, so on narrow screens they collide once zoomed in.
 // After each zoom, place labels greedily (selected, related, focused, then the rest)
-// and hide any that would overlap one already placed. Hover and tap still reveal them.
+// and hide any that would overlap one already placed. Only the selected label is always
+// kept; a related feature keeps its ring when its label is hidden. Hover and tap still reveal them.
 function declutter(){
   cn.classed('lbl-off',false);
-  if(!svgEl.classList.contains('deep')) return;
+  // Zoomed out, only the selected and related labels are showing, so only those can collide.
+  const deep=svgEl.classList.contains('deep');
+  if(!deep&&!state.sel) return;
   const box=el=>{const r=el.getBoundingClientRect(); return {l:r.left-3,t:r.top-1,r:r.right+3,b:r.bottom+1};};
   const hits=(a,b)=>a.l<b.r&&b.l<a.r&&a.t<b.b&&b.t<a.b;
   // Service names and the stars themselves are fixed obstacles.
   const kept=[]; sn.each(function(){ kept.push(box(this.querySelector('.lbl')),box(this.querySelector('.ring'))); });
-  cn.each(function(){ kept.push(box(this.querySelector('.core'))); });
+  cn.each(function(){ kept.push(box(this.querySelector(this.classList.contains('sel')?'.selhalo':'.core'))); });
   const rank=n=>n.classList.contains('sel')?0:n.classList.contains('rel')?1:n.closest('.is-focus')?2:3;
-  const nodes=cn.nodes().filter(n=>!n.classList.contains('muted')&&(!state.focus||rank(n)<3))
+  const nodes=cn.nodes().filter(n=>!n.classList.contains('muted')&&(deep ? !state.focus||rank(n)<3 : rank(n)<2))
     .map((n,i)=>({n,i,k:rank(n)})).sort((a,b)=>a.k-b.k||a.i-b.i);
   for(const {n,k} of nodes){
     const b=box(n.querySelector('.lbl'));
-    if(k>1&&kept.some(o=>hits(o,b))) n.classList.add('lbl-off'); else kept.push(b);
+    if(k>0&&kept.some(o=>hits(o,b))) n.classList.add('lbl-off'); else kept.push(b);
   }
 }
 
@@ -150,15 +158,35 @@ function viewportBox(ignorePanel){
 }
 function bounds(pts,px,py){const xs=pts.map(p=>p.x),ys=pts.map(p=>p.y);return[Math.min(...xs)-px,Math.min(...ys)-py,Math.max(...xs)+px,Math.max(...ys)+py+30];}
 const ALL_B = bounds(ALL,70,60);
-const clusterB = id => bounds([SVC[id],...SVC[id].components],95,45);
+const clusterB = id => bounds([SVC[id],...SVC[id].components],20,20);
 function transformFor(b,ignorePanel){
   const v=viewportBox(ignorePanel);
   const k=Math.min(v.w/(b[2]-b[0]), v.h/(b[3]-b[1]));
   const cx=(b[0]+b[2])/2, cy=(b[1]+b[3])/2;
   return d3.zoomIdentity.translate(v.x0+v.w/2-k*cx, v.y0+v.h/2-k*cy).scale(k);
 }
-function fitTo(b,dur=850){
-  const t=transformFor(b);
+// Labels keep a fixed screen size, so world-unit padding can't reserve room for them.
+// Find the largest zoom at which every outward-facing label still ends inside the free area,
+// but never go below 70% of the label-free fit: on a narrow view a clipped label beats a tiny map.
+// On the phone layout no zoom fits the labels, so leave them to declutter() and keep the map large.
+function clusterFit(id){
+  const v=viewportBox(), b=clusterB(id), cx=(b[0]+b[2])/2, cy=(b[1]+b[3])/2;
+  const base=Math.min(v.w/(b[2]-b[0]), v.h/(b[3]-b[1]));
+  let k=base*.9;
+  if(svgEl.getBoundingClientRect().width>720){
+    k=base;
+    SVC[id].components.forEach(c=>{
+      const out=c.left ? cx-c.x : c.x-cx; if(out<=0) return;
+      const room=v.w/2-(20+nodeEl(c.id).querySelector('.lbl').getComputedTextLength());
+      if(room>0) k=Math.min(k,room/out);
+    });
+    k=Math.max(k,base*.7);
+  }
+  return d3.zoomIdentity.translate(v.x0+v.w/2-k*cx, v.y0+v.h/2-k*cy).scale(k);
+}
+const fitCluster = (id,dur) => zoomTo(clusterFit(id),dur);
+const fitTo = (b,dur) => zoomTo(transformFor(b),dur);
+function zoomTo(t,dur=850){
   svg.interrupt();
   if(RM||!dur) svg.call(zoom.transform,t);
   else svg.transition().duration(dur).ease(d3.easeCubicInOut).call(zoom.transform,t);
@@ -173,7 +201,7 @@ function selectNode(id,fromRoute,dur){
   state.sel = id;
   apply();
   showPanel(id);
-  requestAnimationFrame(()=>fitTo(clusterB(state.focus),dur));
+  requestAnimationFrame(()=>fitCluster(state.focus,dur));
   if(!fromRoute) syncUrl(true);
 }
 function resetAll(fromRoute,dur){
@@ -212,9 +240,7 @@ function drawThreads(){
   const n=state.sel&&N[state.sel];
   const data = n&&n.type==='cmp' ? [...REL[n.id]].map(t=>({a:n,b:N[t]})) : [];
   gThreads.selectAll('path').data(data,d=>d.a.id+'>'+d.b.id).join(
-    en=>en.append('path').attr('class','thread').style('opacity',0)
-          .call(p=>p.transition().duration(RM?0:500).style('opacity',.85)),
-    up=>up, ex=>ex.remove())
+    en=>en.append('path').attr('class','thread'), up=>up, ex=>ex.remove())
    .attr('d',d=>{
      const {a,b}=d, mx=(a.x+b.x)/2, my=(a.y+b.y)/2, dx=b.x-a.x, dy=b.y-a.y;
      return `M${a.x},${a.y}Q${mx-dy*.2},${my+dx*.2} ${b.x},${b.y}`;
@@ -247,6 +273,21 @@ planSel.addEventListener('change',()=>{
 });
 suitesSel.addEventListener('change',()=>{ state.suites=suitesSel.value?suitesSel.value.split('+'):[]; applyLicence(); syncUrl(false); });
 
+/* ---------- theme ---------- */
+// index.html applies a stored choice before first paint; with none stored the OS setting decides.
+const themeBtn=document.getElementById('theme'), darkQuery=matchMedia('(prefers-color-scheme: dark)');
+const currentTheme = () => document.documentElement.dataset.theme || (darkQuery.matches?'dark':'light');
+const otherTheme = () => currentTheme()==='dark' ? 'light' : 'dark';
+function labelTheme(){ const t=`Switch to ${otherTheme()} theme`; themeBtn.setAttribute('aria-label',t); themeBtn.title=t; }
+themeBtn.addEventListener('click',()=>{
+  const to=otherTheme();
+  document.documentElement.dataset.theme=to;
+  try{ localStorage.setItem('constellate-theme',to); }catch(e){}
+  labelTheme();
+});
+darkQuery.addEventListener('change',labelTheme);
+labelTheme();
+
 /* ---------- crumbs & panel ---------- */
 function renderCrumbs(){
   if(!state.focus){ crumbEl.innerHTML=`<span>Microsoft 365 as a star chart: ${SERVICES.length} constellations, ${CMP_COUNT} features</span>`; return; }
@@ -260,7 +301,8 @@ function renderCrumbs(){
 const EX = `<span class="sr-only ex" hidden>, not in the selected licence</span>`;
 // Plans below the component's tier that include it anyway, e.g. desktop apps in Business Standard.
 const extraPlans = c => { const ps=Object.values(PLANS).filter(p=>p.with?.includes(c.id)).map(p=>p.label);
-  return ps.length ? `<span class="chip">or ${esc(ps.join(', '))}</span>` : ''; };
+  return ps.length ? `<span>or ${esc(ps.join(', '))}</span>` : ''; };
+const SVC_ORDER = Object.fromEntries(SERVICES.map((s,i)=>[s.id,i]));
 const addToPlans = c => Object.values(PLANS).filter(p=>p.suites && !p.without?.includes(c.id)).map(p=>p.label);
 const addTo = c => { const ps=addToPlans(c); return ps.length ? `<span>Add to: ${esc(ps.join(', '))}</span>` : ''; };
 const licShort = c =>LIC[c.lic].short + (c.suite ? ' / '+SUITES[c.suite].label.split(' ')[0] : '');
@@ -275,10 +317,12 @@ function showPanel(id){
       <h3>${n.components.length} components</h3><ul class="list">${n.components.map(c=>
         `<li><button data-go="${c.id}"><span class="dot"></span><span>${esc(c.name)}${EX}</span><span class="lic" title="${esc(LIC[c.lic].label)}">${esc(licShort(c))}</span></button></li>`).join('')}</ul>`;
   } else {
-    const rel=[...REL[n.id]].map(r=>N[r]);
+    // Same-service features first, then the rest grouped by service in chart order.
+    const at=r=>r.svc===n.svc?-1:SVC_ORDER[r.svc];
+    const rel=[...REL[n.id]].map(r=>N[r]).sort((a,b)=>at(a)-at(b));
     h+=`<p class="kind">Part of <button data-go="${s.id}">${esc(s.name)}</button></p><h2>${esc(n.name)}</h2>
       <p class="sum">${esc(n.summary)}</p>
-      <p class="licline"><span class="chip">${esc(LIC[n.lic].label)}</span>${extraPlans(n)}${n.suite?`<span class="chip" title="${esc(SUITES[n.suite].full)}">or ${esc(SUITES[n.suite].label)}</span>${addTo(n)}`:''}${n.note?`<span>${esc(n.note)}</span>`:''}</p>
+      <p class="licline"><span class="chip">${esc(LIC[n.lic].label)}</span>${extraPlans(n)}${n.suite?`<span title="${esc(SUITES[n.suite].full)}">or ${esc(SUITES[n.suite].label)}</span>${addTo(n)}`:''}${n.note?`<span>${esc(n.note)}</span>`:''}</p>
       <div class="actions"><a class="btn" href="${esc(n.docs)}" target="_blank" rel="noopener">Open Microsoft Learn docs</a></div>
       ${rel.length?`<h3>Works with</h3><ul class="list">${rel.map(r=>
         `<li><button data-go="${r.id}" style="--c:var(--${r.svc})"><span class="dot"></span><span>${esc(r.name)}${EX}</span><span class="lic">${esc(SVC[r.svc].short)}</span></button></li>`).join('')}</ul>`:''}`;
@@ -298,9 +342,13 @@ function hidePanel(returnTo){
 function closePanel(){
   hidePanel(state.sel);
   if(state.sel && N[state.sel].type==='cmp'){ state.sel=state.focus; apply(); }
-  requestAnimationFrame(()=>fitTo(state.focus?clusterB(state.focus):ALL_B));
+  requestAnimationFrame(()=>state.focus?fitCluster(state.focus):fitTo(ALL_B));
   syncUrl(true);
 }
+['mouseover','focusin'].forEach(t=>panel.addEventListener(t,e=>{
+  const b=e.target.closest('.list [data-go]'); heat(b?b.dataset.go:null,!!b);
+}));
+['mouseleave','focusout'].forEach(t=>panel.addEventListener(t,()=>heat(null,false)));
 document.addEventListener('click',e=>{
   const go=e.target.closest('[data-go]');
   if(go){ go.dataset.go==='__all' ? resetAll() : selectNode(go.dataset.go); return; }
@@ -357,4 +405,4 @@ addEventListener('hashchange',()=>restore(true));
 if(location.hash) restore(false);
 syncUrl(false);
 let rt;
-addEventListener('resize',()=>{ clearTimeout(rt); rt=setTimeout(()=>{ refreshOverviewK(); fitTo(state.focus?clusterB(state.focus):ALL_B,0); },120); });
+addEventListener('resize',()=>{ clearTimeout(rt); rt=setTimeout(()=>{ refreshOverviewK(); state.focus?fitCluster(state.focus,0):fitTo(ALL_B,0); },120); });
