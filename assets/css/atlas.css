@@ -6,7 +6,7 @@
   --font-display:"EB Garamond",Georgia,"Times New Roman",serif;--font-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --shadow-pop:0 12px 30px -12px rgba(8,16,34,.45);
   --ease-out:cubic-bezier(.3,.7,.3,1);--dur-fast:.2s;--dur-base:.4s;--dur-slow:1s;
-  --target:44px;
+  --target:44px;--thread-o:.4;--thread-o-hot:.9;
   box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
   padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px);
 }
@@ -55,12 +55,18 @@ button{font:inherit;color:inherit}
 .cmp.rel .relring{opacity:.9}
 .cmp .lbl{font-size:var(--text-sm);fill:var(--ink);opacity:0;transition:opacity var(--dur-fast) var(--ease-out)}
 #sky.deep:not(.focused) .cmp:not(.lbl-off) .lbl,#sky.deep .is-focus .cmp:not(.lbl-off) .lbl{opacity:.9}
-.cmp:hover .lbl,.cmp:focus-visible .lbl,.cmp.sel .lbl,.cmp.rel .lbl{opacity:1}
+.cmp:hover .lbl,.cmp:focus-visible .lbl,.cmp.sel .lbl,.cmp.rel:not(.lbl-off) .lbl{opacity:1}
+.cmp .selhalo{fill:var(--c);opacity:0;transition:opacity var(--dur-fast) var(--ease-out)}
+.cmp.sel .selhalo{opacity:calc(var(--halo) * 2)}
+.cmp.sel .relring{opacity:1;stroke-width:2}
 .cmp.sel .core{stroke:var(--ink);stroke-width:2}
 .cmp.sel .lbl{font-weight:600}
 .cmp.muted{opacity:.14}
 
-.thread{fill:none;stroke-width:1.5;vector-effect:non-scaling-stroke;stroke-linecap:round;opacity:.85}
+.thread{fill:none;stroke-width:1.5;vector-effect:non-scaling-stroke;stroke-linecap:round;opacity:var(--thread-o);transition:opacity var(--dur-fast) var(--ease-out);animation:thread-in var(--dur-base) var(--ease-out)}
+.thread.hot{opacity:var(--thread-o-hot)}
+/* no "to": the fade ends at the rule's own opacity */
+@keyframes thread-in{from{opacity:0}}
 
 /* top bar */
 .top{position:absolute;top:0;left:0;right:0;display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:12px 20px;padding:18px 22px 10px;pointer-events:none;z-index:3;transition:right var(--dur-base) var(--ease-out)}
@@ -120,6 +126,8 @@ input:focus-visible,select:focus-visible,button:focus-visible,a:focus-visible{ou
 .hint.gone{opacity:0;pointer-events:none}
 
 @media (min-width:721px){.app.panel-open .top{right:380px}}
+/* below this width the centred hint would sit on the footer text */
+@media (max-width:1100px){.hint{bottom:84px}}
 @media (max-width:720px){
   .top{padding:12px 14px 8px}
   .brand h1{font-size:23px}
@@ -151,5 +159,6 @@ input:focus-visible,select:focus-visible,button:focus-visible,a:focus-visible{ou
 
 @media (prefers-reduced-motion:reduce){
   .reveal{animation:none}
-  .panel,.top,.svc-g,.link,.cline,.hint,.cmp .lbl{transition:none}
+  .panel,.top,.svc-g,.link,.cline,.hint,.cmp .lbl,.cmp .selhalo,.thread{transition:none}
+  .thread{animation:none}
 }
